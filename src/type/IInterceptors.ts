@@ -22,3 +22,8 @@ export interface IResponseInterceptor {
 export interface IRequiredResponseInterceptor extends IResponseInterceptor {
 	weights: number
 }
+
+export interface IResponseInterceptorInfo {
+	beforeReturnValue: any
+	interceptor: IRequiredResponseInterceptor
+}

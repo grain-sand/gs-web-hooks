@@ -1,4 +1,4 @@
-import {InterceptorError, StatusError, IRequiredResponseInterceptor} from "../type";
+import {InterceptorError, StatusError, IRequiredResponseInterceptor, IResponseInterceptorInfo} from "../type";
 import {isString} from "gs-base";
 
 const InterceptorsKey = '__interceptors';
@@ -10,11 +10,6 @@ const RequestMethodKey = '__requestMethod';
 
 type OpenFn = (method: string, url: string | URL) => void
 type SendFn = (body?: Document | XMLHttpRequestBodyInit | null) => void
-
-interface IResponseInterceptorInfo {
-	beforeReturnValue: any
-	interceptor: IRequiredResponseInterceptor
-}
 
 export function getInterceptors() {
 	return (XMLHttpRequest as any)[InterceptorsKey] as IRequiredResponseInterceptor[];

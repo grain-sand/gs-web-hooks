@@ -1,24 +1,22 @@
-import {InterceptorError, IRequiredResponseInterceptor, StatusError} from "../type";
+import {InterceptorError, IRequiredResponseInterceptor, IResponseInterceptorInfo, StatusError} from "../type";
 import {isString} from "gs-base";
 
 const InterceptorsKey = '__fetchInterceptors';
 
-interface IResponseInterceptorInfo {
-	beforeReturnValue: any
-	interceptor: IRequiredResponseInterceptor
-}
+// 获取全局对象，兼容 Web Workers 环境
+const globalObj = typeof window !== 'undefined' ? window : self;
 
 export function getInterceptors() {
-	return (window as any)[InterceptorsKey] as IRequiredResponseInterceptor[];
+	return (globalObj as any)[InterceptorsKey] as IRequiredResponseInterceptor[];
 }
 
 export function checkAndInstall(): IRequiredResponseInterceptor[] {
-	if (InterceptorsKey in window) {
-		return (window as any)[InterceptorsKey] as IRequiredResponseInterceptor[];
+	if (InterceptorsKey in globalObj) {
+		return (globalObj as any)[InterceptorsKey] as IRequiredResponseInterceptor[];
 	}
 	const interceptors: IRequiredResponseInterceptor[] = [];
 	// 存储拦截器数组
-	Object.defineProperty(window, InterceptorsKey, {
+	Object.defineProperty(globalObj, InterceptorsKey, {
 		value: interceptors,
 		writable: false,
 		enumerable: true,
@@ -29,8 +27,8 @@ export function checkAndInstall(): IRequiredResponseInterceptor[] {
 }
 
 function replaceFetchMethod(): void {
-	const originalFetch = window.fetch;
-	window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+	const originalFetch = globalObj.fetch;
+	globalObj.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
 		const currentInterceptors = getInterceptors();
 		if (!currentInterceptors || !currentInterceptors.length) {
 			return originalFetch(input, init);
