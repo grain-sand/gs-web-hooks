@@ -1,5 +1,4 @@
-import type {IRequiredResponseInterceptor} from "../type/IInterceptors.js";
-import {InterceptorError, StatusError} from "./Errors.js";
+import {InterceptorError, IRequiredResponseInterceptor, StatusError} from "../type";
 import {isString} from "gs-base";
 
 const InterceptorsKey = '__fetchInterceptors';
@@ -80,7 +79,7 @@ async function handleResponseWithModification(response: Response, matchedInfos: 
 		for (const {interceptor} of matchedInfos) {
 			try {
 				interceptor.onStatusError && interceptor.onStatusError(err);
-			} catch (e: any) {
+			} catch {
 			}
 		}
 		// 返回原始响应
@@ -99,7 +98,7 @@ async function handleResponseWithModification(response: Response, matchedInfos: 
 					modifiedResponseText = JSON.stringify(rv);
 				}
 			}
-		} catch (e: any) {
+		} catch (e) {
 			throwError(`${interceptor.id} afterResponse error`, interceptor, method, url, beforeReturnValue, e);
 		}
 	}
@@ -125,7 +124,7 @@ async function handleResponseWithoutModification(response: Response, matchedInfo
 		for (const {interceptor} of matchedInfos) {
 			try {
 				interceptor.onStatusError && interceptor.onStatusError(err);
-			} catch (e: any) {
+			} catch {
 			}
 		}
 		// 返回原始响应
@@ -140,7 +139,7 @@ async function handleResponseWithoutModification(response: Response, matchedInfo
 				// 当modifyResponse为false时，如果afterResponse返回了数据，回调onInterceptorError
 				throwError(`${interceptor.id} afterResponse should not return data when modifyResponse is false`, interceptor, method, url, beforeReturnValue, new Error('afterResponse should not return data when modifyResponse is false'));
 			}
-		} catch (e: any) {
+		} catch (e) {
 			throwError(`${interceptor.id} afterResponse error`, interceptor, method, url, beforeReturnValue, e);
 		}
 	}
@@ -161,7 +160,7 @@ function matchInterceptors(method: string, url: string, body: any, interceptors:
 				beforeReturnValue,
 				interceptor
 			});
-		} catch (e: any) {
+		} catch (e) {
 			throwError(`${interceptor.id} beforeResponse error`, interceptor, method, url, body, e);
 		}
 	}
@@ -177,6 +176,7 @@ function throwError(message: string, interceptor: IRequiredResponseInterceptor, 
 			requestBody,
 			cause
 		}));
-	} catch (e2: any) {
+	} catch (e) {
+		console.error(e);
 	}
 }

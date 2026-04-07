@@ -1,17 +1,18 @@
 {
-  "name": "gs-unit-test",
+  "name": "gs-web-hooks",
   "version": "1.0.0",
   "author": {
 	"name": "grain-sand"
   },
-  "homepage": "https://github.com/grain-sand/gs-unit-test",
+  "homepage": "https://github.com/grain-sand/gs-web-hooks",
   "repository": {
 	"type": "git",
-	"url": "git+https://github.com/grain-sand/gs-unit-test.git"
+	"url": "git+https://github.com/grain-sand/gs-web-hooks.git"
   },
   "scripts": {
 	"build": "gs-rollup -c",
-	"test:xhr": "vitest run xhr"
+	"test:xhr": "vitest run xhr",
+	"test:fetch": "vitest run fetch"
   },
   "dependencies": {
 	"gs-base": "latest"

@@ -1,5 +1,4 @@
-import type {IRequiredResponseInterceptor} from "../type/IInterceptors.js";
-import {InterceptorError, StatusError} from "./Errors.js";
+import {InterceptorError, StatusError, IRequiredResponseInterceptor} from "../type";
 import {isString} from "gs-base";
 
 const InterceptorsKey = '__interceptors';
@@ -118,7 +117,7 @@ function addSuccessListener(xhr: XMLHttpRequest, matchedInfos: IResponseIntercep
 				for (const {interceptor} of matchedInfos) {
 					try {
 						interceptor.onStatusError && interceptor.onStatusError(err);
-					} catch (e: any) {
+					} catch {
 					}
 				}
 				return;
@@ -130,7 +129,7 @@ function addSuccessListener(xhr: XMLHttpRequest, matchedInfos: IResponseIntercep
 						// 当modifyResponse为false时，如果afterResponse返回了数据，回调onInterceptorError
 						throwError(`${interceptor.id} afterResponse should not return data when modifyResponse is false`, interceptor, this[RequestMethodKey], this[RequestUrlKey], beforeReturnValue, new Error('afterResponse should not return data when modifyResponse is false'));
 					}
-				} catch (e: any) {
+				} catch (e) {
 					throwError(`${interceptor.id} afterResponse error`, interceptor, this[RequestMethodKey], this[RequestUrlKey], beforeReturnValue, e);
 				}
 			}
@@ -159,7 +158,7 @@ function replaceOnreadystatechange(xhr: XMLHttpRequest, matchedInfos: IResponseI
 				for (const {interceptor} of matchedInfos) {
 					try {
 						interceptor.onStatusError && interceptor.onStatusError(err);
-					} catch (e: any) {
+					} catch {
 					}
 				}
 				return;
@@ -174,7 +173,7 @@ function replaceOnreadystatechange(xhr: XMLHttpRequest, matchedInfos: IResponseI
 							this[FakeResponseTextKey] = JSON.stringify(rv);
 						}
 					}
-				} catch (e: any) {
+				} catch (e) {
 					throwError(`${interceptor.id} afterResponse error`, interceptor, this[RequestMethodKey], this[RequestUrlKey], beforeReturnValue, e);
 				}
 			}
@@ -196,7 +195,7 @@ function matchInterceptors(method: string, url: string, body: any, interceptors:
 				beforeReturnValue,
 				interceptor
 			})
-		} catch (e: any) {
+		} catch (e) {
 			throwError(`${interceptor.id} beforeResponse error`, interceptor, method, url, body, e);
 		}
 	}
@@ -212,6 +211,7 @@ function throwError(message: string, interceptor: IRequiredResponseInterceptor, 
 			requestBody,
 			cause
 		}));
-	} catch (e2: any) {
+	} catch (e) {
+		console.error(e);
 	}
 }

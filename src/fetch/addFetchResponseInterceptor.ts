@@ -1,4 +1,4 @@
-import type {IRequiredResponseInterceptor, IResponseInterceptor} from "../type/IInterceptors.js";
+import type {IRequiredResponseInterceptor, IResponseInterceptor} from "../type";
 import {checkAndInstall, getInterceptors} from "./checkAndInstall.js";
 import {removeFromArray} from "gs-base";
 
