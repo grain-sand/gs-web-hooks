@@ -2,7 +2,7 @@ import type {IRequiredResponseInterceptor, IResponseInterceptor} from "../type/I
 import {checkAndInstall, getInterceptors} from "./checkAndInstall.js";
 import {removeFromArray} from "gs-base";
 
-export function addXhrResponseInterceptor(interceptor: IResponseInterceptor): IRequiredResponseInterceptor[] {
+export function addFetchResponseInterceptor(interceptor: IResponseInterceptor): IRequiredResponseInterceptor[] {
 	interceptor.weights || (interceptor.weights = 0);
 	const interceptors: IRequiredResponseInterceptor[] = checkAndInstall();
 	const index = interceptors.findIndex(i => i.id === interceptor.id);
@@ -15,7 +15,7 @@ export function addXhrResponseInterceptor(interceptor: IResponseInterceptor): IR
 	return interceptors;
 }
 
-export function removeXhrResponseInterceptor(id:string):void {
+export function removeFetchResponseInterceptor(id:string):void {
 	const interceptors = getInterceptors();
 	if(!interceptors || !interceptors.length) {
 		return;

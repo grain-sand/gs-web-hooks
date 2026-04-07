@@ -1,4 +1,4 @@
-import type {IRequiredResponseInterceptor} from "./IInterceptors.js";
+import type {IRequiredResponseInterceptor} from "../type/IInterceptors.js";
 import {InterceptorError, StatusError} from "./Errors.js";
 import {isString} from "gs-base";
 
