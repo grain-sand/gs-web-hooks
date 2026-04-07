@@ -26,20 +26,20 @@ export function checkAndInstall(): IRequiredResponseInterceptor[] {
 		return (XMLHttpRequest as any)[InterceptorsKey] as IRequiredResponseInterceptor[];
 	}
 	const interceptors: IRequiredResponseInterceptor[] = [];
-	defineProps(interceptors)
-	replaceOpenMethod();
-	replaceSendMethod(interceptors)
-	return interceptors;
-}
-
-function defineProps(interceptors: IRequiredResponseInterceptor[]): void {
-	const responseTextProperty: PropertyDescriptor = Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, RealResponseTextKey)!;
+	// 存储拦截器数组
 	Object.defineProperty(XMLHttpRequest, InterceptorsKey, {
 		value: interceptors,
 		writable: false,
 		enumerable: true,
 		configurable: false
-	})
+	});
+	replaceOpenMethod();
+	replaceSendMethod();
+	return interceptors;
+}
+
+function defineProps(): void {
+	const responseTextProperty: PropertyDescriptor = Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, RealResponseTextKey)!;
 	Object.defineProperty(XMLHttpRequest.prototype, RawResponseTextNewKey, {
 		get: responseTextProperty.get,
 		set: responseTextProperty.set,
@@ -74,36 +74,46 @@ function replaceOpenMethod(): void {
 	};
 }
 
-function replaceSendMethod(interceptors: IRequiredResponseInterceptor[]): void {
+function replaceSendMethod(): void {
 	const send: SendFn = XMLHttpRequest.prototype.send;
 	XMLHttpRequest.prototype.send = function (body?: any): void {
-		if (!interceptors.length) {
+		const currentInterceptors = getInterceptors();
+		if (!currentInterceptors || !currentInterceptors.length) {
 			return send.call(this, body);
 		}
-		const matchedInfos: IResponseInterceptorInfo[] = matchInterceptors(this[RequestMethodKey], this[RequestUrlKey], body, interceptors);
+		const matchedInfos: IResponseInterceptorInfo[] = matchInterceptors(this[RequestMethodKey], this[RequestUrlKey], body, currentInterceptors);
 		if (!matchedInfos.length) {
 			return send.call(this, body);
 		}
-		replaceOnreadystatechange(this, matchedInfos, body);
+		const needsModifyResponse = matchedInfos.some(({interceptor}) => interceptor.modifyResponse !== false);
+		if (needsModifyResponse) {
+			// 确保定义了必要的属性
+			if (!(RawResponseTextNewKey in XMLHttpRequest.prototype)) {
+				defineProps();
+			}
+			replaceOnreadystatechange(this, matchedInfos, body);
+		} else {
+			addSuccessListener(this, matchedInfos, body);
+		}
 		return send.call(this, body);
 	}
 }
 
-function replaceOnreadystatechange(xhr: XMLHttpRequest, matchedInfos: IResponseInterceptorInfo[], body?: any) {
+function addSuccessListener(xhr: XMLHttpRequest, matchedInfos: IResponseInterceptorInfo[], body?: any) {
 	const onreadystatechange: Function = xhr.onreadystatechange;
 	xhr.onreadystatechange = function () {
 		if (this.readyState !== 4) {
 			return onreadystatechange.call(this);
 		}
 		try {
-			if (xhr.status !== 200) {
+			if (this.status !== 200) {
 				const err = new StatusError({
-					message: `${xhr.status} ${xhr.statusText}`,
-					method: xhr[RequestMethodKey],
-					requestUrl: xhr[RequestUrlKey],
-					status: xhr.status,
+					message: `${this.status} ${this.statusText}`,
+					method: this[RequestMethodKey],
+					requestUrl: this[RequestUrlKey],
+					status: this.status,
 					requestBody: body,
-					responseText: xhr.responseText as any,
+					responseText: this.responseText as any,
 				})
 				for (const {interceptor} of matchedInfos) {
 					try {
@@ -115,12 +125,53 @@ function replaceOnreadystatechange(xhr: XMLHttpRequest, matchedInfos: IResponseI
 			}
 			for (const {beforeReturnValue, interceptor} of matchedInfos) {
 				try {
-					const rv = interceptor.afterResponse(beforeReturnValue, xhr.responseText);
+					const rv = interceptor.afterResponse(beforeReturnValue, this.responseText);
+					if (rv !== undefined && rv !== null) {
+						// 当modifyResponse为false时，如果afterResponse返回了数据，回调onInterceptorError
+						throwError(`${interceptor.id} afterResponse should not return data when modifyResponse is false`, interceptor, this[RequestMethodKey], this[RequestUrlKey], beforeReturnValue, new Error('afterResponse should not return data when modifyResponse is false'));
+					}
+				} catch (e: any) {
+					throwError(`${interceptor.id} afterResponse error`, interceptor, this[RequestMethodKey], this[RequestUrlKey], beforeReturnValue, e);
+				}
+			}
+		} finally {
+			onreadystatechange.call(this);
+		}
+	}
+}
+
+function replaceOnreadystatechange(xhr: XMLHttpRequest, matchedInfos: IResponseInterceptorInfo[], body?: any) {
+	const onreadystatechange: Function = xhr.onreadystatechange;
+	xhr.onreadystatechange = function () {
+		if (this.readyState !== 4) {
+			return onreadystatechange.call(this);
+		}
+		try {
+			if (this.status !== 200) {
+				const err = new StatusError({
+					message: `${this.status} ${this.statusText}`,
+					method: this[RequestMethodKey],
+					requestUrl: this[RequestUrlKey],
+					status: this.status,
+					requestBody: body,
+					responseText: this.responseText as any,
+				})
+				for (const {interceptor} of matchedInfos) {
+					try {
+						interceptor.onStatusError && interceptor.onStatusError(err);
+					} catch (e: any) {
+					}
+				}
+				return;
+			}
+			for (const {beforeReturnValue, interceptor} of matchedInfos) {
+				try {
+					const rv = interceptor.afterResponse(beforeReturnValue, this.responseText);
 					if (rv) {
 						if (isString(rv)) {
-							xhr[FakeResponseTextKey] = rv;
+							this[FakeResponseTextKey] = rv;
 						} else {
-							xhr[FakeResponseTextKey] = JSON.stringify(rv);
+							this[FakeResponseTextKey] = JSON.stringify(rv);
 						}
 					}
 				} catch (e: any) {

@@ -11,7 +11,7 @@
   },
   "scripts": {
 	"build": "gs-rollup -c",
-	"test:hello": "vitest run hello"
+	"test:xhr": "vitest run xhr"
   },
   "dependencies": {
 	"gs-base": "latest"

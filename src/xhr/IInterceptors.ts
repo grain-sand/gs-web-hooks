@@ -7,6 +7,8 @@ export interface IResponseInterceptor {
 
 	weights?: number
 
+	modifyResponse?: boolean
+
 	beforeResponse(method: RequestMethods | string, requestUrl: string, requestBody: string): any | Promise<any>
 
 	afterResponse(beforeReturnValue: any, responseText: string): void | any | Promise<void | any>
