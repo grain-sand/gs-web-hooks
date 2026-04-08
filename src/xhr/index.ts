@@ -1,2 +1,2 @@
-export * from './addXhrResponseInterceptor.js'
-export * from '../type/index.js'
+export * from './addXhrInterceptor.js'
+export * from './checkAndInstallXhr.js'

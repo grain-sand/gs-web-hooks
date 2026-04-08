@@ -1,7 +1,7 @@
 import type {RequestMethods} from "./http-types.js";
 import {InterceptorError, StatusError} from "./Errors.js";
 
-export interface IResponseInterceptor {
+export interface IInterceptor {
 
 	readonly id: string
 
@@ -19,11 +19,11 @@ export interface IResponseInterceptor {
 
 }
 
-export interface IRequiredResponseInterceptor extends IResponseInterceptor {
+export interface IRequiredInterceptor extends IInterceptor {
 	weights: number
 }
 
 export interface IResponseInterceptorInfo {
 	beforeReturnValue: any
-	interceptor: IRequiredResponseInterceptor
+	interceptor: IRequiredInterceptor
 }

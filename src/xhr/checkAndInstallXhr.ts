@@ -1,4 +1,10 @@
-import {InterceptorError, StatusError, IRequiredResponseInterceptor, IResponseInterceptorInfo} from "../type";
+import {
+	IRequiredInterceptor,
+	IResponseInterceptorInfo,
+	matchInterceptors,
+	StatusError,
+	throwError
+} from "../base";
 import {isString} from "gs-base";
 
 const InterceptorsKey = '__interceptors';
@@ -11,15 +17,15 @@ const RequestMethodKey = '__requestMethod';
 type OpenFn = (method: string, url: string | URL) => void
 type SendFn = (body?: Document | XMLHttpRequestBodyInit | null) => void
 
-export function getInterceptors() {
-	return (XMLHttpRequest as any)[InterceptorsKey] as IRequiredResponseInterceptor[];
+export function getXhrInterceptors() {
+	return (XMLHttpRequest as any)[InterceptorsKey] as IRequiredInterceptor[];
 }
 
-export function checkAndInstall(): IRequiredResponseInterceptor[] {
+export function checkAndInstallXhr(): IRequiredInterceptor[] {
 	if (InterceptorsKey in XMLHttpRequest) {
-		return (XMLHttpRequest as any)[InterceptorsKey] as IRequiredResponseInterceptor[];
+		return (XMLHttpRequest as any)[InterceptorsKey] as IRequiredInterceptor[];
 	}
-	const interceptors: IRequiredResponseInterceptor[] = [];
+	const interceptors: IRequiredInterceptor[] = [];
 	// 存储拦截器数组
 	Object.defineProperty(XMLHttpRequest, InterceptorsKey, {
 		value: interceptors,
@@ -71,7 +77,7 @@ function replaceOpenMethod(): void {
 function replaceSendMethod(): void {
 	const send: SendFn = XMLHttpRequest.prototype.send;
 	XMLHttpRequest.prototype.send = function (body?: any): void {
-		const currentInterceptors = getInterceptors();
+		const currentInterceptors = getXhrInterceptors();
 		if (!currentInterceptors || !currentInterceptors.length) {
 			return send.call(this, body);
 		}
@@ -175,38 +181,5 @@ function replaceOnreadystatechange(xhr: XMLHttpRequest, matchedInfos: IResponseI
 		} finally {
 			onreadystatechange.call(this);
 		}
-	}
-}
-
-function matchInterceptors(method: string, url: string, body: any, interceptors: IRequiredResponseInterceptor[]): IResponseInterceptorInfo[] {
-	const infos: IResponseInterceptorInfo[] = [];
-	for (const interceptor of interceptors) {
-		try {
-			const beforeReturnValue = interceptor.beforeResponse(method, url, body);
-			if (beforeReturnValue === undefined) {
-				continue;
-			}
-			infos.push({
-				beforeReturnValue,
-				interceptor
-			})
-		} catch (e) {
-			throwError(`${interceptor.id} beforeResponse error`, interceptor, method, url, body, e);
-		}
-	}
-	return infos
-}
-
-function throwError(message: string, interceptor: IRequiredResponseInterceptor, method: string, requestUrl: string, requestBody: any, cause?: any) {
-	try {
-		interceptor.onInterceptorError && interceptor.onInterceptorError(new InterceptorError({
-			message,
-			method,
-			requestUrl,
-			requestBody,
-			cause
-		}));
-	} catch (e) {
-		console.error(e);
 	}
 }

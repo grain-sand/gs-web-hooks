@@ -1,2 +1,2 @@
-export * from './addFetchResponseInterceptor.js';
-export * from '../type/index.js';
+export * from './addFetchInterceptor.js';
+export * from './checkAndInstallFetch.js';

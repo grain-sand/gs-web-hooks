@@ -1,4 +1,10 @@
-import {InterceptorError, IRequiredResponseInterceptor, IResponseInterceptorInfo, StatusError} from "../type";
+import {
+	IRequiredInterceptor,
+	IResponseInterceptorInfo,
+	matchInterceptors,
+	StatusError,
+	throwError
+} from "../base";
 import {isString} from "gs-base";
 
 const InterceptorsKey = '__fetchInterceptors';
@@ -6,15 +12,15 @@ const InterceptorsKey = '__fetchInterceptors';
 // 获取全局对象，兼容 Web Workers 环境
 const globalObj = typeof window !== 'undefined' ? window : self;
 
-export function getInterceptors() {
-	return (globalObj as any)[InterceptorsKey] as IRequiredResponseInterceptor[];
+export function getFetchInterceptors() {
+	return (globalObj as any)[InterceptorsKey] as IRequiredInterceptor[];
 }
 
-export function checkAndInstall(): IRequiredResponseInterceptor[] {
+export function checkAndInstallFetch(): IRequiredInterceptor[] {
 	if (InterceptorsKey in globalObj) {
-		return (globalObj as any)[InterceptorsKey] as IRequiredResponseInterceptor[];
+		return (globalObj as any)[InterceptorsKey] as IRequiredInterceptor[];
 	}
-	const interceptors: IRequiredResponseInterceptor[] = [];
+	const interceptors: IRequiredInterceptor[] = [];
 	// 存储拦截器数组
 	Object.defineProperty(globalObj, InterceptorsKey, {
 		value: interceptors,
@@ -29,7 +35,7 @@ export function checkAndInstall(): IRequiredResponseInterceptor[] {
 function replaceFetchMethod(): void {
 	const originalFetch = globalObj.fetch;
 	globalObj.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-		const currentInterceptors = getInterceptors();
+		const currentInterceptors = getFetchInterceptors();
 		if (!currentInterceptors || !currentInterceptors.length) {
 			return originalFetch(input, init);
 		}
@@ -144,37 +150,4 @@ async function handleResponseWithoutModification(response: Response, matchedInfo
 
 	// 返回原始响应
 	return new Response(responseText, response);
-}
-
-function matchInterceptors(method: string, url: string, body: any, interceptors: IRequiredResponseInterceptor[]): IResponseInterceptorInfo[] {
-	const infos: IResponseInterceptorInfo[] = [];
-	for (const interceptor of interceptors) {
-		try {
-			const beforeReturnValue = interceptor.beforeResponse(method, url, body);
-			if (beforeReturnValue === undefined) {
-				continue;
-			}
-			infos.push({
-				beforeReturnValue,
-				interceptor
-			});
-		} catch (e) {
-			throwError(`${interceptor.id} beforeResponse error`, interceptor, method, url, body, e);
-		}
-	}
-	return infos;
-}
-
-function throwError(message: string, interceptor: IRequiredResponseInterceptor, method: string, requestUrl: string, requestBody: any, cause?: any) {
-	try {
-		interceptor.onInterceptorError && interceptor.onInterceptorError(new InterceptorError({
-			message,
-			method,
-			requestUrl,
-			requestBody,
-			cause
-		}));
-	} catch (e) {
-		console.error(e);
-	}
 }

@@ -1,26 +1,26 @@
 // noinspection TypeScriptUnresolvedReference
 
-import {describe, it, expect, beforeEach, afterEach, vi} from "vitest";
-import {addFetchResponseInterceptor, removeFetchResponseInterceptor} from "../src/fetch";
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
+import {addFetchInterceptor, removeFetchInterceptor} from "../src";
 
 describe('fetch', () => {
 	beforeEach(() => {
 		// 清理所有拦截器
-		removeFetchResponseInterceptor('test-fetch-interceptor-1');
-		removeFetchResponseInterceptor('test-fetch-interceptor-2');
-		removeFetchResponseInterceptor('test-fetch-interceptor-3');
+		removeFetchInterceptor('test-fetch-interceptor-1');
+		removeFetchInterceptor('test-fetch-interceptor-2');
+		removeFetchInterceptor('test-fetch-interceptor-3');
 	});
 
 	afterEach(() => {
 		// 清理所有拦截器
-		removeFetchResponseInterceptor('test-fetch-interceptor-1');
-		removeFetchResponseInterceptor('test-fetch-interceptor-2');
-		removeFetchResponseInterceptor('test-fetch-interceptor-3');
+		removeFetchInterceptor('test-fetch-interceptor-1');
+		removeFetchInterceptor('test-fetch-interceptor-2');
+		removeFetchInterceptor('test-fetch-interceptor-3');
 	});
 
 	it('should add interceptor and modify response when modifyResponse is true', async () => {
 		// 添加一个修改响应的拦截器
-		addFetchResponseInterceptor({
+		addFetchInterceptor({
 			id: 'test-fetch-interceptor-1',
 			modifyResponse: true,
 			beforeResponse: () => true,
@@ -40,7 +40,7 @@ describe('fetch', () => {
 
 	it('should add interceptor and not modify response when modifyResponse is false', async () => {
 		// 添加一个不修改响应的拦截器
-		addFetchResponseInterceptor({
+		addFetchInterceptor({
 			id: 'test-fetch-interceptor-2',
 			modifyResponse: false,
 			beforeResponse: () => true,
@@ -64,7 +64,7 @@ describe('fetch', () => {
 		const onInterceptorError = vi.fn();
 
 		// 添加一个不修改响应的拦截器，但afterResponse返回数据
-		addFetchResponseInterceptor({
+		addFetchInterceptor({
 			id: 'test-fetch-interceptor-3',
 			modifyResponse: false,
 			beforeResponse: () => true,

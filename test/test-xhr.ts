@@ -1,26 +1,26 @@
 // noinspection TypeScriptUnresolvedReference
 
-import {describe, it, expect, beforeEach, afterEach, vi} from "vitest";
-import {addXhrResponseInterceptor, removeXhrResponseInterceptor} from "../src/xhr";
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
+import {addXhrInterceptor, removeXhrInterceptor} from "../src";
 
 describe('xhr', () => {
 	beforeEach(() => {
 		// 清理所有拦截器
-		removeXhrResponseInterceptor('test-interceptor-1');
-		removeXhrResponseInterceptor('test-interceptor-2');
-		removeXhrResponseInterceptor('test-interceptor-3');
+		removeXhrInterceptor('test-interceptor-1');
+		removeXhrInterceptor('test-interceptor-2');
+		removeXhrInterceptor('test-interceptor-3');
 	});
 
 	afterEach(() => {
 		// 清理所有拦截器
-		removeXhrResponseInterceptor('test-interceptor-1');
-		removeXhrResponseInterceptor('test-interceptor-2');
-		removeXhrResponseInterceptor('test-interceptor-3');
+		removeXhrInterceptor('test-interceptor-1');
+		removeXhrInterceptor('test-interceptor-2');
+		removeXhrInterceptor('test-interceptor-3');
 	});
 
 	it('should add interceptor and modify response when modifyResponse is true', async () => {
 		// 添加一个修改响应的拦截器
-		addXhrResponseInterceptor({
+		addXhrInterceptor({
 			id: 'test-interceptor-1',
 			modifyResponse: true,
 			beforeResponse: () => true,
@@ -53,7 +53,7 @@ describe('xhr', () => {
 
 	it('should add interceptor and not modify response when modifyResponse is false', async () => {
 		// 添加一个不修改响应的拦截器
-		addXhrResponseInterceptor({
+		addXhrInterceptor({
 			id: 'test-interceptor-2',
 			modifyResponse: false,
 			beforeResponse: () => true,
@@ -90,7 +90,7 @@ describe('xhr', () => {
 		const onInterceptorError = vi.fn();
 
 		// 添加一个不修改响应的拦截器，但afterResponse返回数据
-		addXhrResponseInterceptor({
+		addXhrInterceptor({
 			id: 'test-interceptor-3',
 			modifyResponse: false,
 			beforeResponse: () => true,
