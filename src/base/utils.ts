@@ -14,7 +14,7 @@ export function matchInterceptors<T extends XMLHttpRequest | Response>(method: s
 	for (const interceptor of interceptors) {
 		try {
 			const beforeReturnValue = interceptor.before(url, method, body);
-			if (beforeReturnValue === undefined) {
+			if (!beforeReturnValue) {
 				continue;
 			}
 			infos.push({
