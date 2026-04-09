@@ -5,23 +5,23 @@ import {removeFromArray} from "gs-base";
  * 响应拦截器管理器
  * 用于管理拦截器的添加和移除
  */
-export class InterceptorManager {
+export class InterceptorManager<T extends XMLHttpRequest | Response> {
 	/**
 	 * 检查并安装拦截器
 	 */
-	#checkAndInstall: () => IRequiredInterceptor[];
+	#checkAndInstall: () => IRequiredInterceptor<T>[];
 
 	/**
 	 * 获取拦截器列表
 	 */
-	#getInterceptors: () => IRequiredInterceptor[];
+	#getInterceptors: () => IRequiredInterceptor<T>[];
 
 	/**
 	 * 构造函数
 	 * @param checkAndInstall 检查并安装拦截器的函数
 	 * @param getInterceptors 获取拦截器列表的函数
 	 */
-	constructor(checkAndInstall: () => IRequiredInterceptor[], getInterceptors: () => IRequiredInterceptor[]) {
+	constructor(checkAndInstall: () => IRequiredInterceptor<T>[], getInterceptors: () => IRequiredInterceptor<T>[]) {
 		this.#checkAndInstall = checkAndInstall;
 		this.#getInterceptors = getInterceptors;
 	}
@@ -31,14 +31,14 @@ export class InterceptorManager {
 	 * @param interceptor 拦截器对象
 	 * @returns 更新后的拦截器列表
 	 */
-	addInterceptor(interceptor: IInterceptor): IRequiredInterceptor[] {
+	addInterceptor(interceptor: IInterceptor<T>): IRequiredInterceptor<T>[] {
 		interceptor.weights || (interceptor.weights = 0);
-		const interceptors: IRequiredInterceptor[] = this.#checkAndInstall();
+		const interceptors: IRequiredInterceptor<T>[] = this.#checkAndInstall();
 		const index = interceptors.findIndex(i => i.id === interceptor.id);
 		if (index > -1) {
-			interceptors.splice(index, 1, interceptor as IRequiredInterceptor);
+			interceptors.splice(index, 1, interceptor as IRequiredInterceptor<T>);
 		} else {
-			interceptors.push(interceptor as IRequiredInterceptor);
+			interceptors.push(interceptor as IRequiredInterceptor<T>);
 		}
 		interceptors.sort(this.#sortFn);
 		return interceptors;
@@ -62,7 +62,7 @@ export class InterceptorManager {
 	 * @param b 第二个拦截器
 	 * @returns 排序结果
 	 */
-	#sortFn(a: IRequiredInterceptor, b: IRequiredInterceptor): number {
+	#sortFn(a: IRequiredInterceptor<T>, b: IRequiredInterceptor<T>): number {
 		return b.weights - a.weights;
 	}
 }

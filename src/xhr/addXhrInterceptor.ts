@@ -3,14 +3,14 @@ import {InterceptorManager} from "../base";
 import {checkAndInstallXhr, getXhrInterceptors} from "./checkAndInstallXhr.js";
 
 // 创建拦截器管理器实例
-const interceptorManager = new InterceptorManager(checkAndInstallXhr, getXhrInterceptors);
+const interceptorManager = new InterceptorManager<XMLHttpRequest>(checkAndInstallXhr, getXhrInterceptors);
 
 /**
  * 添加 xhr 响应拦截器
  * @param interceptor 拦截器对象
  * @returns 更新后的拦截器列表
  */
-export function addXhrInterceptor(interceptor: IInterceptor): IRequiredInterceptor[] {
+export function addXhrInterceptor(interceptor: IInterceptor<XMLHttpRequest>): IRequiredInterceptor<XMLHttpRequest>[] {
 	return interceptorManager.addInterceptor(interceptor);
 }
 

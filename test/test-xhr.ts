@@ -23,8 +23,8 @@ describe('xhr', () => {
 		addXhrInterceptor({
 			id: 'test-interceptor-1',
 			modifyResponse: true,
-			beforeResponse: () => true,
-			afterResponse: (_, responseText) => {
+			before: () => true,
+			after: (responseText, _) => {
 				return JSON.stringify({modified: true, data: JSON.parse(responseText)});
 			}
 		});
@@ -56,8 +56,8 @@ describe('xhr', () => {
 		addXhrInterceptor({
 			id: 'test-interceptor-2',
 			modifyResponse: false,
-			beforeResponse: () => true,
-			afterResponse: (_, responseText) => {
+			before: () => true,
+			after: (responseText, _) => {
 				// 尝试修改响应，但不应该生效
 				return JSON.stringify({modified: true, data: JSON.parse(responseText)});
 			}
@@ -93,8 +93,8 @@ describe('xhr', () => {
 		addXhrInterceptor({
 			id: 'test-interceptor-3',
 			modifyResponse: false,
-			beforeResponse: () => true,
-			afterResponse: (_, responseText) => {
+			before: () => true,
+			after: (responseText, _) => {
 				// 尝试修改响应，但不应该生效
 				return JSON.stringify({modified: true, data: JSON.parse(responseText)});
 			},

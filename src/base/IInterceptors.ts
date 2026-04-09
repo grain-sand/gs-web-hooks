@@ -1,7 +1,7 @@
 import type {RequestMethods} from "./http-types.js";
 import {InterceptorError, StatusError} from "./Errors.js";
 
-export interface IInterceptor {
+export interface IInterceptor<T extends XMLHttpRequest | Response> {
 
 	readonly id: string
 
@@ -9,9 +9,9 @@ export interface IInterceptor {
 
 	modifyResponse?: boolean
 
-	beforeResponse(method: RequestMethods | string, requestUrl: string, requestBody: string): any | Promise<any>
+	before(url: string, method: RequestMethods | string, requestBody: string): any | Promise<any>
 
-	afterResponse(beforeReturnValue: any, responseText: string): void | any | Promise<void | any>
+	after(text: string, beforeReturnValue: any, context: T): void | any | Promise<void | any>
 
 	onInterceptorError?(error: InterceptorError): void
 
@@ -19,11 +19,11 @@ export interface IInterceptor {
 
 }
 
-export interface IRequiredInterceptor extends IInterceptor {
+export interface IRequiredInterceptor<T extends XMLHttpRequest | Response> extends IInterceptor<T> {
 	weights: number
 }
 
-export interface IResponseInterceptorInfo {
+export interface IResponseInterceptorInfo<T extends XMLHttpRequest | Response> {
 	beforeReturnValue: any
-	interceptor: IRequiredInterceptor
+	interceptor: IRequiredInterceptor<T>
 }

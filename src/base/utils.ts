@@ -9,11 +9,11 @@ import {InterceptorError} from "./Errors";
  * @param interceptors 拦截器数组
  * @returns 匹配的拦截器信息数组
  */
-export function matchInterceptors(method: string, url: string, body: any, interceptors: IRequiredInterceptor[]): IResponseInterceptorInfo[] {
-	const infos: IResponseInterceptorInfo[] = [];
+export function matchInterceptors<T extends XMLHttpRequest | Response>(method: string, url: string, body: any, interceptors: IRequiredInterceptor<T>[]): IResponseInterceptorInfo<T>[] {
+	const infos: IResponseInterceptorInfo<T>[] = [];
 	for (const interceptor of interceptors) {
 		try {
-			const beforeReturnValue = interceptor.beforeResponse(method, url, body);
+			const beforeReturnValue = interceptor.before(url, method, body);
 			if (beforeReturnValue === undefined) {
 				continue;
 			}
@@ -37,7 +37,7 @@ export function matchInterceptors(method: string, url: string, body: any, interc
  * @param requestBody 请求体
  * @param cause 错误原因
  */
-export function throwError(message: string, interceptor: IRequiredInterceptor, method: string, requestUrl: string, requestBody: any, cause?: any) {
+export function throwError<T extends XMLHttpRequest | Response>(message: string, interceptor: IRequiredInterceptor<T>, method: string, requestUrl: string, requestBody: any, cause?: any) {
 	try {
 		interceptor.onInterceptorError && interceptor.onInterceptorError(new InterceptorError({
 			message,

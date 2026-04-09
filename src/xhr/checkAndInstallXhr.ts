@@ -18,14 +18,14 @@ type OpenFn = (method: string, url: string | URL) => void
 type SendFn = (body?: Document | XMLHttpRequestBodyInit | null) => void
 
 export function getXhrInterceptors() {
-	return (XMLHttpRequest as any)[InterceptorsKey] as IRequiredInterceptor[];
+	return (XMLHttpRequest as any)[InterceptorsKey] as IRequiredInterceptor<XMLHttpRequest>[];
 }
 
-export function checkAndInstallXhr(): IRequiredInterceptor[] {
+export function checkAndInstallXhr(): IRequiredInterceptor<XMLHttpRequest>[] {
 	if (InterceptorsKey in XMLHttpRequest) {
-		return (XMLHttpRequest as any)[InterceptorsKey] as IRequiredInterceptor[];
+		return (XMLHttpRequest as any)[InterceptorsKey] as IRequiredInterceptor<XMLHttpRequest>[];
 	}
-	const interceptors: IRequiredInterceptor[] = [];
+	const interceptors: IRequiredInterceptor<XMLHttpRequest>[] = [];
 	// 存储拦截器数组
 	Object.defineProperty(XMLHttpRequest, InterceptorsKey, {
 		value: interceptors,
@@ -81,7 +81,7 @@ function replaceSendMethod(): void {
 		if (!currentInterceptors || !currentInterceptors.length) {
 			return send.call(this, body);
 		}
-		const matchedInfos: IResponseInterceptorInfo[] = matchInterceptors(this[RequestMethodKey], this[RequestUrlKey], body, currentInterceptors);
+		const matchedInfos: IResponseInterceptorInfo<XMLHttpRequest>[] = matchInterceptors(this[RequestMethodKey], this[RequestUrlKey], body, currentInterceptors);
 		if (!matchedInfos.length) {
 			return send.call(this, body);
 		}
@@ -99,7 +99,7 @@ function replaceSendMethod(): void {
 	}
 }
 
-function addSuccessListener(xhr: XMLHttpRequest, matchedInfos: IResponseInterceptorInfo[], body?: any) {
+function addSuccessListener(xhr: XMLHttpRequest, matchedInfos: IResponseInterceptorInfo<XMLHttpRequest>[], body?: any) {
 	const onreadystatechange: Function = xhr.onreadystatechange;
 	xhr.onreadystatechange = function () {
 		if (this.readyState !== 4) {
@@ -125,7 +125,7 @@ function addSuccessListener(xhr: XMLHttpRequest, matchedInfos: IResponseIntercep
 			}
 			for (const {beforeReturnValue, interceptor} of matchedInfos) {
 				try {
-					const rv = interceptor.afterResponse(beforeReturnValue, this.responseText);
+					const rv = interceptor.after(this.responseText, beforeReturnValue, this);
 					if (rv !== undefined && rv !== null) {
 						// 当modifyResponse为false时，如果afterResponse返回了数据，回调onInterceptorError
 						throwError(`${interceptor.id} afterResponse should not return data when modifyResponse is false`, interceptor, this[RequestMethodKey], this[RequestUrlKey], beforeReturnValue, new Error('afterResponse should not return data when modifyResponse is false'));
@@ -140,7 +140,7 @@ function addSuccessListener(xhr: XMLHttpRequest, matchedInfos: IResponseIntercep
 	}
 }
 
-function replaceOnreadystatechange(xhr: XMLHttpRequest, matchedInfos: IResponseInterceptorInfo[], body?: any) {
+function replaceOnreadystatechange(xhr: XMLHttpRequest, matchedInfos: IResponseInterceptorInfo<XMLHttpRequest>[], body?: any) {
 	const onreadystatechange: Function = xhr.onreadystatechange;
 	xhr.onreadystatechange = function () {
 		if (this.readyState !== 4) {
@@ -166,7 +166,7 @@ function replaceOnreadystatechange(xhr: XMLHttpRequest, matchedInfos: IResponseI
 			}
 			for (const {beforeReturnValue, interceptor} of matchedInfos) {
 				try {
-					const rv = interceptor.afterResponse(beforeReturnValue, this.responseText);
+					const rv = interceptor.after(this.responseText, beforeReturnValue, this);
 					if (rv) {
 						if (isString(rv)) {
 							this[FakeResponseTextKey] = rv;

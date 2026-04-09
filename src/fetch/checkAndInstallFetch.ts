@@ -13,14 +13,14 @@ const InterceptorsKey = '__fetchInterceptors';
 const globalObj = typeof window !== 'undefined' ? window : self;
 
 export function getFetchInterceptors() {
-	return (globalObj as any)[InterceptorsKey] as IRequiredInterceptor[];
+	return (globalObj as any)[InterceptorsKey] as IRequiredInterceptor<Response>[];
 }
 
-export function checkAndInstallFetch(): IRequiredInterceptor[] {
+export function checkAndInstallFetch(): IRequiredInterceptor<Response>[] {
 	if (InterceptorsKey in globalObj) {
-		return (globalObj as any)[InterceptorsKey] as IRequiredInterceptor[];
+		return (globalObj as any)[InterceptorsKey] as IRequiredInterceptor<Response>[];
 	}
-	const interceptors: IRequiredInterceptor[] = [];
+	const interceptors: IRequiredInterceptor<Response>[] = [];
 	// 存储拦截器数组
 	Object.defineProperty(globalObj, InterceptorsKey, {
 		value: interceptors,
@@ -46,7 +46,7 @@ function replaceFetchMethod(): void {
 		const body = init?.body as string;
 
 		// 匹配拦截器
-		const matchedInfos: IResponseInterceptorInfo[] = matchInterceptors(method, url, body, currentInterceptors);
+		const matchedInfos: IResponseInterceptorInfo<Response>[] = matchInterceptors(method, url, body, currentInterceptors);
 		if (!matchedInfos.length) {
 			return originalFetch(input, init);
 		}
@@ -66,7 +66,7 @@ function replaceFetchMethod(): void {
 	};
 }
 
-async function handleResponseWithModification(response: Response, matchedInfos: IResponseInterceptorInfo[], method: string, url: string, body?: string): Promise<Response> {
+async function handleResponseWithModification(response: Response, matchedInfos: IResponseInterceptorInfo<Response>[], method: string, url: string, body?: string): Promise<Response> {
 	// 读取响应文本
 	const responseText = await response.text();
 
@@ -94,7 +94,7 @@ async function handleResponseWithModification(response: Response, matchedInfos: 
 	let modifiedResponseText = responseText;
 	for (const {beforeReturnValue, interceptor} of matchedInfos) {
 		try {
-			const rv = interceptor.afterResponse(beforeReturnValue, modifiedResponseText);
+			const rv = interceptor.after(modifiedResponseText, beforeReturnValue, response);
 			if (rv) {
 				if (isString(rv)) {
 					modifiedResponseText = rv;
@@ -111,7 +111,7 @@ async function handleResponseWithModification(response: Response, matchedInfos: 
 	return new Response(modifiedResponseText, response);
 }
 
-async function handleResponseWithoutModification(response: Response, matchedInfos: IResponseInterceptorInfo[], method: string, url: string, body?: string): Promise<Response> {
+async function handleResponseWithoutModification(response: Response, matchedInfos: IResponseInterceptorInfo<Response>[], method: string, url: string, body?: string): Promise<Response> {
 	// 读取响应文本
 	const responseText = await response.text();
 
@@ -138,7 +138,7 @@ async function handleResponseWithoutModification(response: Response, matchedInfo
 	// 执行拦截器的afterResponse方法
 	for (const {beforeReturnValue, interceptor} of matchedInfos) {
 		try {
-			const rv = interceptor.afterResponse(beforeReturnValue, responseText);
+			const rv = interceptor.after(responseText, beforeReturnValue, response);
 			if (rv !== undefined && rv !== null) {
 				// 当modifyResponse为false时，如果afterResponse返回了数据，回调onInterceptorError
 				throwError(`${interceptor.id} afterResponse should not return data when modifyResponse is false`, interceptor, method, url, beforeReturnValue, new Error('afterResponse should not return data when modifyResponse is false'));
